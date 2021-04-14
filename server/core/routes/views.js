@@ -1,6 +1,6 @@
-const authController = require('../controllers/AuthController');
+const authController = require("../controllers/AuthController");
 
 module.exports = (router) => {
-  router.get('*', authController.home);
+  // router.get('*', authController.home);
   return router;
 };

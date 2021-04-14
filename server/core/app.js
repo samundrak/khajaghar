@@ -1,36 +1,50 @@
 /* eslint-disable no-console, no-param-reassign */
 /* global require, global */
-require('dotenv').config();
-const express = require('express');
-const path = require('path');
-const appConfig = require('./../../config/app');
-const logger = require('morgan');
-const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const events = require('events');
-const Logger = require('./services/Logger');
-const boom = require('express-boom');
-const _ = require('lodash');
-const Promise = require('bluebird');
-const helper = require('./utils/helper');
-const winstonLogsDisplay = require('winston-logs-display');
+require("dotenv").config();
+const express = require("express");
+const path = require("path");
+const appConfig = require("./../../config/app");
+const logger = require("morgan");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const events = require("events");
+const Logger = require("./services/Logger");
+const boom = require("express-boom");
+const _ = require("lodash");
+const { v4 } = require("uuid");
+const Promise = require("bluebird");
+const multer = require("multer");
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, v4() + path.extname(file.originalname)); //Appending extension
+  },
+});
+const helper = require("./utils/helper");
+const winstonLogsDisplay = require("winston-logs-display");
+const upload = multer({
+  storage,
+});
+global.upload = upload;
 
 const app = express();
-app.set('env', process.env.NODE_ENV);
-global.config = () => (appConfig);
+app.set("env", process.env.NODE_ENV);
+global.config = () => appConfig;
 global.events = new events.EventEmitter();
 global.helper = helper;
 global.Promsie = Promise;
-global.logger = new Logger().setEnv(app.get('env')).get();
+global.logger = new Logger().setEnv(app.get("env")).get();
 global.app = app;
-global.db = require('./database/mongo');
-let auth = require('./../../config/auth');
-let routes = require('./routes');
-const apiRoutes = require('./routes/api');
-const authApiRoutes = require('./routes/api/auth');
+global.db = require("./database/mongo");
+let auth = require("./../../config/auth");
+let routes = require("./routes");
+const apiRoutes = require("./routes/api");
+const authApiRoutes = require("./routes/api/auth");
 
-require('./events');
+require("./events");
 
 routes = routes(app);
 auth = auth();
@@ -38,20 +52,20 @@ const port = appConfig.app.port;
 
 app.use(cors());
 app.use(boom());
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.json({ type: 'application/vnd.api+json'}));
+app.use(logger("dev"));
+app.use(bodyParser.json({ type: "application/vnd.api+json" }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(auth.initialize());
-app.use(express.static(path.join(__dirname, '../../public')));
+app.use(express.static(path.join(__dirname, "../../public")));
+app.use(express.static(path.join(__dirname, "../../uploads")));
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   winstonLogsDisplay(app, global.logger);
 }
 app.use((req, res, next) => {
   req.error = (data, httpCode) => {
-    if (typeof data === 'string') {
+    if (typeof data === "string") {
       data = {
         message: data,
       };
@@ -68,15 +82,15 @@ app.use((req, res, next) => {
   return next();
 });
 // view engine setup
-app.set('views', path.join(__dirname, '../views'));
-app.set('view engine', 'jade');
-app.use('/api', apiRoutes);
-app.use('/api/auth', auth.authenticate(), authApiRoutes);
-app.use('/', routes);
+app.set("views", path.join(__dirname, "../views"));
+app.set("view engine", "jade");
+app.use("/api", apiRoutes);
+app.use("/api/auth", auth.authenticate(), authApiRoutes);
+app.use("/", routes);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
-  const err = new Error('Not Found');
+  const err = new Error("Not Found");
   err.status = 404;
   next(err);
 });
@@ -86,36 +100,28 @@ app.use((req, res, next) => {
 // development error handler
 // will print stacktrace
 app.use((err, req, res, next) => {
-  if (app.get('env') === 'development') {
-    if (req.path.indexOf('api') > -1) {
-      return res
-        .status(err.status || 500)
-        .json({
-          message: err.message,
-          error: err,
-        });
+  if (app.get("env") === "development") {
+    if (req.path.indexOf("api") > -1) {
+      return res.status(err.status || 500).json({
+        message: err.message,
+        error: err,
+      });
     }
-    return res
-      .status(err.status || 500)
-      .render('error', {
-        message: err.message,
-        error: err,
-      });
-  }
-  if (req.path.indexOf('api') > -1) {
-    return res
-      .status(err.status || 500)
-      .json({
-        message: err.message,
-        error: err,
-      });
-  }
-  return res
-    .status(err.status || 500)
-    .render('error', {
-      message: 'Some Error Occurred',
-      error: '',
+    return res.status(err.status || 500).render("error", {
+      message: err.message,
+      error: err,
     });
+  }
+  if (req.path.indexOf("api") > -1) {
+    return res.status(err.status || 500).json({
+      message: err.message,
+      error: err,
+    });
+  }
+  return res.status(err.status || 500).render("error", {
+    message: "Some Error Occurred",
+    error: "",
+  });
 });
 
 const server = app.listen(port, (err) => {
@@ -137,4 +143,4 @@ process.on("rejectionHandled", (promise) => {
   // See Promise.onUnhandledRejectionHandled for parameter documentation
   console.log(promise);
 });
-process.on('uncaughtException', console.log);
+process.on("uncaughtException", console.log);

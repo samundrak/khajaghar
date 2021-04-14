@@ -33,6 +33,7 @@ module.exports = () => {
           "status",
           "_id",
           "created_at",
+          "image",
         ])(user);
         newUser.isCustomer = !!user.customer_id;
         if (user.customer_id) {
