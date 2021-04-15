@@ -3,7 +3,6 @@ const user = require("../../../controllers/UserController");
 const food = require("../../../controllers/FoodController");
 const auth = require("../../../controllers/AuthController");
 const order = require("../../../controllers/OrderController");
-const userSchema = require("../../../rules/request/UserSchema");
 const foodSchema = require("../../../rules/request/FoodSchema");
 const orderSchema = require("../../../rules/request/OrderSchema");
 const requestValidator = require("../../../middlewares/requestValidator");
@@ -20,6 +19,7 @@ api.patch("/users/:id", global.upload.single("photo"), user.update);
 api.get("/foods", food.index);
 api.post(
   "/foods",
+  global.upload.array("images"),
   administratorMiddleware,
   requestValidator(foodSchema),
   food.create

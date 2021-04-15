@@ -12,9 +12,11 @@ const events = require("events");
 const Logger = require("./services/Logger");
 const boom = require("express-boom");
 const _ = require("lodash");
-const { v4 } = require("uuid");
 const Promise = require("bluebird");
+const helper = require("./utils/helper");
+const winstonLogsDisplay = require("winston-logs-display");
 const multer = require("multer");
+const { v4 } = require("uuid");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -23,13 +25,10 @@ const storage = multer.diskStorage({
     cb(null, v4() + path.extname(file.originalname)); //Appending extension
   },
 });
-const helper = require("./utils/helper");
-const winstonLogsDisplay = require("winston-logs-display");
 const upload = multer({
   storage,
 });
 global.upload = upload;
-
 const app = express();
 app.set("env", process.env.NODE_ENV);
 global.config = () => appConfig;
@@ -53,6 +52,7 @@ const port = appConfig.app.port;
 app.use(cors());
 app.use(boom());
 app.use(logger("dev"));
+app.use(bodyParser.json());
 app.use(bodyParser.json({ type: "application/vnd.api+json" }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());

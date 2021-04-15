@@ -1,14 +1,23 @@
-const FoodService = require('../services/Food');
-const FoodRepo = require('../repositories/FoodRepository');
+const FoodService = require("../services/Food");
+const FoodRepo = require("../repositories/FoodRepository");
 
 module.exports = {
-
   create(req, res) {
     const food = new FoodService();
-    food.create({ ...req.body, created_by: req.user._id })
-      .then(data => res.status(201).json(data))
+    console.log({
+      ...req.body,
+      images: req.files?.map((image) => image.filename) || [],
+      created_by: req.user._id,
+    });
+    food
+      .create({
+        ...req.body,
+        images: req.files?.map((image) => image.filename) || [],
+        created_by: req.user._id,
+      })
+      .then((data) => res.status(201).json(data))
       .catch((reason) => {
-        if (typeof reason === 'object') {
+        if (typeof reason === "object") {
           return res.boom.badImplementation(reason.message);
         }
         return res.boom.badRequest(null, { message: reason });
@@ -17,13 +26,13 @@ module.exports = {
 
   index(req, res) {
     FoodRepo.all()
-      .then(foods => res.json(foods))
+      .then((foods) => res.json(foods))
       .catch(() => res.boom.badImplementation());
   },
 
   show({ params: { id } }, res) {
     FoodRepo.findOne({ _id: id })
-      .then(food => res.json(food))
+      .then((food) => res.json(food))
       .catch(() => res.boom.badImplementation());
   },
 

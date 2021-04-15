@@ -21,7 +21,6 @@ module.exports = {
     if (user.role === "user" && user._id + "" !== id) {
       return res.boom.unauthorized();
     }
-    console.log(req.file);
     UserRepo.update(
       { _id: id },
       {
